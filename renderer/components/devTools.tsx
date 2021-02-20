@@ -1,9 +1,9 @@
-import React from 'react';
-import electron from 'electron';
-import { DarkModeToggle } from './darkModeToggle';
-import { useAuth } from '../utils/auth/auth';
-import { useRouter } from 'next/router';
-import { NonAuthRoutes } from './authRoute';
+import React from "react";
+import electron from "electron";
+import { DarkModeToggle } from "./darkModeToggle";
+import { useAuth } from "../utils/auth/auth";
+import { useRouter } from "next/router";
+import { NonAuthRoutes } from "./authRoute";
 
 const ipcRenderer: any = electron.ipcRenderer || false;
 
@@ -12,12 +12,15 @@ export const DevTools = () => {
   const router = useRouter();
 
   const getSettings = async () => {
-    console.log(await ipcRenderer.invoke('get-all-settings'));
+    console.log(await ipcRenderer.invoke("get-all-settings"));
   };
 
   const clearSettings = async () => {
-    await ipcRenderer.invoke('clear-all-settings');
-    console.log('sttings cleared: ', await ipcRenderer.invoke('get-all-settings'));
+    await ipcRenderer.invoke("clear-all-settings");
+    console.log(
+      "sttings cleared: ",
+      await ipcRenderer.invoke("get-all-settings")
+    );
   };
 
   const refreshToken = async () => {
@@ -61,9 +64,9 @@ export const DevTools = () => {
       <button className="border-2 p-1" onClick={refreshToken}>
         Refresh Token
       </button> */}
-      <button className="border-2 p-1" onClick={signout}>
+      {/* <button className="border-2 p-1" onClick={signout}>
         signout
-      </button>
+      </button> */}
     </div>
   );
 };
