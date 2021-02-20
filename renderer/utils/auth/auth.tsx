@@ -1,16 +1,22 @@
 /* eslint-disable consistent-return */
-import React, { FC, useState, useContext, createContext, useEffect } from 'react';
-import { toast } from 'react-toastify';
+import React, {
+  FC,
+  useState,
+  useContext,
+  createContext,
+  useEffect,
+} from "react";
+import { toast } from "react-toastify";
 import {
   authenticateMojang,
   validateMojangToken,
   MojangUserResponse,
   refreshMojangToken,
   invalidateMojangToken,
-} from '../../services/mojang';
-import { AuthRoutes } from '../../components/authRoute';
-import { getUser, updateUser, createUser } from '../db/configManager';
-import electron from 'electron';
+} from "../../services/mojang";
+import { AuthRoutes } from "../../components/authRoute";
+import { getUser, updateUser, createUser } from "../db/configManager";
+import electron from "electron";
 
 const ipcRenderer: any = electron.ipcRenderer || false;
 
@@ -44,7 +50,7 @@ function useProvideAuth() {
     try {
       const response = await authenticateMojang(login, password);
       if (response.error) {
-        toast.error(response.errorMessage, { className: 'bg-red-800 text-sm' });
+        toast.error(response.errorMessage, { className: "bg-red-800 text-sm" });
         return false;
       } else {
         await handleUser(response.data);
@@ -60,7 +66,7 @@ function useProvideAuth() {
       const response = await refreshMojangToken();
       if (response.error) {
         toast.error(response.errorMessage, {
-          className: 'bg-red-800 text-sm',
+          className: "bg-red-800 text-sm",
         });
       } else {
         handleUser(response.data);
@@ -76,15 +82,15 @@ function useProvideAuth() {
       const response = await invalidateMojangToken();
       if (response.error) {
         toast.error(response.errorMessage, {
-          className: 'bg-red-800 text-sm',
+          className: "bg-red-800 text-sm",
         });
       } else {
-        await ipcRenderer.invoke('reset-settings', 'account');
+        await ipcRenderer.invoke("reset-settings", "account");
         await handleUser(false);
         return true;
       }
     } catch (err) {
-      console.log('Error signing out, routing to login');
+      console.log("Error signing out, routing to login");
       console.log(err);
       return false;
     }
@@ -98,7 +104,7 @@ function useProvideAuth() {
       } else {
         return true;
       }
-      console.log('VAL RESPONSE: ', response);
+      console.log("VAL RESPONSE: ", response);
     } catch (err) {
       throw new Error(err);
     }
@@ -108,8 +114,10 @@ function useProvideAuth() {
   useEffect(() => {
     // Add user to state on mount
     (async () => {
-      await ipcRenderer.invoke('get-all-settings').then((item) => {
-        setUser(item.account);
+      await ipcRenderer.invoke("get-all-settings").then((item) => {
+        if (item.accessToken !== null) {
+          setUser(item.account);
+        }
       });
     })();
   }, []);

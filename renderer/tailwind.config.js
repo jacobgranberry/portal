@@ -322,6 +322,10 @@ module.exports = {
       animation: {
         spinner: 'spinner 1s linear infinite',
       },
+      backgroundImage: theme => ({
+        'pixel-pattern': "url('/imgages/pixel-pattern.png')",
+       })
+
     },
   },
   variants: {
