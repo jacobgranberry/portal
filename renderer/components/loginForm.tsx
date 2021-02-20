@@ -6,6 +6,7 @@ import { Input } from './input';
 import { Checkbox } from './checkbox';
 import { Icon } from './icon';
 import { useRouter } from 'next/router';
+import { AuthRoutes } from './authRoute';
 
 interface FormData {
   login: string;
@@ -31,7 +32,7 @@ export const LoginForm = () => {
       const user = await auth?.signin(data.login, data.password);
       if (user) {
         setLoading(false);
-        router.push('/dashboard');
+        router.push(AuthRoutes.dashboard);
       } else {
         setLoading(false);
       }
