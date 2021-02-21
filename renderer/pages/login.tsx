@@ -42,10 +42,11 @@ const Login = () => {
       setButtonLoading(true);
       const res = await auth.signin(data.login, data.password);
       if (res) {
-        setButtonLoading(false);
         router.push(AuthRoutes.dashboard);
       }
+      setButtonLoading(false);
     } catch (error) {
+      console.error("Error signing in:", error);
       toast.error(
         "Error logging into Mojang servers. Please try again later.",
         {
@@ -53,7 +54,6 @@ const Login = () => {
         }
       );
       setButtonLoading(false);
-      console.error("error", error);
     }
   };
 

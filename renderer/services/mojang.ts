@@ -96,7 +96,7 @@ export const refreshMojangToken = async (token) => {
  * @param clientToken
  */
 export const invalidateMojangToken = async (accessToken, clientToken) => {
-  const url = `https://authserver.mojang.com/invalidate`;
+  const url = `/api/mojang/invalidate`;
 
   await axios
     .post(url, {
