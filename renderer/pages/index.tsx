@@ -1,33 +1,51 @@
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
-import { AuthRoutes } from '../components/authRoute';
-import { Layout } from '../components/layout';
-import { LoginForm } from '../components/loginForm';
-import { useAuth } from '../utils/auth/auth';
-import electron from 'electron';
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/router";
+import { AuthRoutes } from "../components/authRoute";
+import { Layout } from "../components/layout";
+import { LoginForm } from "../components/loginForm";
+import { useAuth } from "../utils/auth/auth";
+import electron from "electron";
+import { signIn, signOut, useSession } from "next-auth/client";
+import { useForm } from "react-hook-form";
+import { Button } from "../components/button";
+import { Input } from "../components/input";
+import { Checkbox } from "../components/checkbox";
+import { Icon } from "../components/icon";
+import { toast } from "react-toastify";
 
 const ipcRenderer: any = electron.ipcRenderer || false;
 
+interface FormData {
+  login: string;
+  password: string;
+  remember?: boolean;
+}
+
 const Login = () => {
-  const [loading, setLoading] = useState(true);
-  const auth = useAuth();
+  const [session, loading] = useSession();
   const router = useRouter();
 
-  // Redirect to dashboard
-  // if validated.
-  useEffect(() => {
-    (async () => {
-      await ipcRenderer.invoke('get-all-settings').then((item) => {
-        if (item && item.account.accessToken !== null) {
-          console.log('asd', item);
-          router.push(AuthRoutes.dashboard);
-        }
-        setLoading(false);
+  const { register, handleSubmit, errors } = useForm<FormData>({
+    defaultValues: {
+      login: "jacobgranbry@gmail.com",
+      password: "Granberrica11!",
+      remember: true,
+    },
+  });
+
+  const onSubmit = async (data: FormData) => {
+    try {
+      const res = await signIn("mojang-login", {
+        username: data.login,
+        password: data.password,
+        callbackUrl: "http://localhost:8888/dashboard",
+        redirect: false,
       });
-    })();
-    if (auth.user && auth.user.accessToken !== null) {
+      console.log("res", res);
+    } catch (error) {
+      console.error(error);
     }
-  }, [auth, router]);
+  };
 
   return (
     <Layout loading={loading}>
@@ -35,13 +53,17 @@ const Login = () => {
         <div className="flex flex-col overflow-hidden bg-white rounded-md shadow-lg max md:flex-row md:flex-1 lg:max-w-screen-md border-4 border-gray-800 dark:border-gray-700">
           <div className="p-4 py-6 text-white bg-red-700 dark:bg-red-800 md:w-80 md:flex-shrink-0 md:flex md:flex-col md:items-center md:justify-evenly border-r-4 border-gray-800 dark:border-gray-700">
             <div className="my-3 text-4xl font-bold tracking-wider text-center w-3/4">
-              <a href="https://www.westeroscraft.com" target="_blank" rel="noreferrer">
+              <a
+                href="https://www.westeroscraft.com"
+                target="_blank"
+                rel="noreferrer"
+              >
                 <svg
                   className="logo"
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 593.39 81.56"
                   style={{
-                    fill: 'white',
+                    fill: "white",
                   }}
                 >
                   <g id="Layer_2">
@@ -56,9 +78,9 @@ const Login = () => {
               </a>
             </div>
             <p className="mt-6 font-normal font-sans text-center text-gray-200 md:mt-0">
-              You must own the Java edition of Minecraft and have a valid Mojang or Microsoft
-              account to log in. We do not ever store your password or any other personal
-              information.
+              You must own the Java edition of Minecraft and have a valid Mojang
+              or Microsoft account to log in. We do not ever store your password
+              or any other personal information.
             </p>
             <p className="flex flex-col items-center justify-center mt-10 text-center">
               <span>Don't have an account?</span>
@@ -72,7 +94,7 @@ const Login = () => {
               </a>
             </p>
             <p className="mt-6 text-sm text-center text-gray-200">
-              View our{' '}
+              View our{" "}
               <a href="/" className="underline">
                 launcher source code
               </a>
@@ -82,10 +104,58 @@ const Login = () => {
             <h3 className="my-4 text-2xl font-heading font-semibold text-gray-700 dark:text-white">
               Minecraft Account Login
             </h3>
-            <LoginForm />
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              className="flex flex-col space-y-5"
+            >
+              <Input
+                name="login"
+                label="Login"
+                ref={register({ required: true })}
+                error={errors.login && "Login required"}
+              />
+              <Input
+                name="password"
+                label="Password"
+                type="password"
+                ref={register({ required: true })}
+                error={errors.password && "Password required"}
+                helperText={
+                  <a
+                    href="https://www.minecraft.net/en-us/password/forgot/"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm text-green-800 dark:text-green-700 hover:text-gray-800 font-medium"
+                  >
+                    Forgot Password?
+                  </a>
+                }
+              />
+              <Checkbox name="remember" ref={register} label="Remember me" />
+              <div>
+                <Button variant="primary" loading={loading}>
+                  Log in
+                </Button>
+              </div>
+              <div className="flex flex-col space-y-5">
+                <span className="flex items-center justify-center space-x-2">
+                  <span className="h-px bg-gray-400 w-14" />
+                  <span className="font-normal text-gray-500 dark:text-gray-300">
+                    or login with
+                  </span>
+                  <span className="h-px bg-gray-400 w-14" />
+                </span>
+                <div className="flex flex-col space-y-4">
+                  <Button variant="outline">
+                    <Icon name="microsoft" iconProps="w-4 mr-2" />
+                    <span>Microsoft</span>
+                  </Button>
+                </div>
+              </div>
+            </form>
             <div>
               <p className="mt-6 text-sm text-center text-gray-400">
-                Having issues logging in? Check out our{' '}
+                Having issues logging in? Check out our{" "}
                 <a
                   href="https://forum.westeroscraft.com/forum/support.40/"
                   target="_blank"
@@ -93,7 +163,7 @@ const Login = () => {
                   className="text-green-800 dark:text-green-700 hover:text-gray-800 font-medium"
                 >
                   support forum
-                </a>{' '}
+                </a>{" "}
                 or browse the #tech-support channel in our
                 <a
                   href="https://discord.gg/pBS5TH4"
@@ -101,7 +171,7 @@ const Login = () => {
                   rel="noreferrer"
                   className="text-green-800 dark:text-green-700 hover:text-gray-800 font-medium"
                 >
-                  {' '}
+                  {" "}
                   Discord.
                 </a>
               </p>

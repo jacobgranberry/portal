@@ -1,9 +1,9 @@
-import type { AppProps } from 'next/app';
-import '../styles/index.css';
-import 'react-toastify/dist/ReactToastify.css';
-import Head from 'next/head';
-import { AuthProvider } from '../utils/auth/auth';
-import '../utils/scripts/wdyr';
+import type { AppProps } from "next/app";
+import "../styles/index.css";
+import "react-toastify/dist/ReactToastify.css";
+import Head from "next/head";
+import { AuthProvider } from "../utils/auth/auth";
+import { Provider } from "next-auth/client";
 
 const MyApp = ({ Component, pageProps }: AppProps) => {
   return (
@@ -11,9 +11,11 @@ const MyApp = ({ Component, pageProps }: AppProps) => {
       <Head>
         <title>WesterosCraft Launcher</title>
       </Head>
-      <AuthProvider>
-        <Component {...pageProps} />
-      </AuthProvider>
+      <Provider session={pageProps.session}>
+        <AuthProvider>
+          <Component {...pageProps} />
+        </AuthProvider>
+      </Provider>
     </>
   );
 };
