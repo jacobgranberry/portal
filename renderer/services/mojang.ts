@@ -1,105 +1,31 @@
-import electron from 'electron';
-
-const ipcRenderer: any = electron.ipcRenderer || false;
-
-// Mojang auth API documented here: https://wiki.vg/Authentication
-
-/**
- * Helper function to access the Mojang auth server
- * @param path
- * @param body
- */
-export const mojangApi = (path: string, body: any) => {
-  const BASE_URL = 'https://authserver.mojang.com';
-  const config = {
-    method: 'post',
-    body: JSON.stringify(body),
-    headers: { 'Content-Type': 'application/json' },
-  };
-
-  return fetch(`${BASE_URL}${path}`, config)
-    .then((res) => res.json())
-    .then((json) => json);
-};
-
-interface ErrorResponse {
-  error: boolean | string;
-  errorMessage: string;
-  cause?: string;
-}
-interface TokenResponse {
-  accessToken: string;
-  clientToken: string;
-}
-
-export interface MojangUserResponse extends TokenResponse {
-  user: {
-    id: string;
-    username: string;
-  };
-  selectedProfile: {
-    name: string;
-    id: string;
-  };
-  availableProfiles: Array<{
-    name: string;
-    id: string;
-  }>;
-}
-
-export interface MojangJSONResponse extends MojangUserResponse, ErrorResponse {}
+import axios from "axios";
 
 /**
  * Authenticates a user using their password
  * @param username
  * @param password
  */
-export const authenticateMojang = async (username: string, password: string) => {
-  try {
-    const response = await fetch('/api/mojang/auth', {
-      method: 'post',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ login: username, password: password }),
+export const authenticateMojangLogin = async (username, password) => {
+  const url = "https://authserver.mojang.com/authenticate";
+  const data = {
+    agent: {
+      name: "Minecraft",
+      version: 1,
+    },
+    username,
+    password,
+    requestUser: true,
+  };
+  const response = await axios
+    .post(url, data)
+    .then(({ data }) => {
+      return data;
+    })
+    .catch((error) => {
+      const { response } = error;
+      return response.data;
     });
-    return response.json();
-  } catch (err) {
-    console.log('err', err);
-    return <MojangJSONResponse>{ error: true, errorMessage: err };
-  }
-};
-
-/**
- * Refreshes a valid accessToken. It can be used to keep a user logged in between gaming sessions and is preferred over storing the user's password in a file
- * @param accessToken
- * @param clientToken
- */
-export const refreshMojangToken = async () => {
-  const refreshToken = await ipcRenderer.invoke('get-tokens');
-
-  if (refreshToken) {
-    const refreshBody = {
-      accessToken: refreshToken.accessToken,
-      clientToken: refreshToken.clientToken,
-    };
-
-    try {
-      const response = await fetch('/api/mojang/refresh', {
-        method: 'post',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(refreshBody),
-      });
-      return response.json();
-    } catch (err) {
-      console.error(err);
-      return <MojangJSONResponse>{ error: true, errorMessage: err };
-    }
-  } else {
-    throw new Error('No available refresh token.');
-  }
+  return response;
 };
 
 /**
@@ -109,29 +35,58 @@ Note that an accessToken may be unusable for authentication with a Minecraft ser
  * @param accessToken
  * @param clientToken
  */
-export const validateMojangToken = async () => {
-  const refreshToken = await ipcRenderer.invoke('get-tokens');
+export const validateMojangToken = async (accessToken, clientToken) => {
+  try {
+    const url = `https://authserver.mojang.com/validate`;
 
-  if (refreshToken) {
-    const refreshBody = {
-      accessToken: refreshToken.accessToken,
-      clientToken: refreshToken.clientToken,
-    };
-    try {
-      const response = await fetch('/api/mojang/validate', {
-        method: 'post',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(refreshBody),
+    const response = await axios
+      .post(url, { accessToken, clientToken })
+      .then(({ data }) => {
+        return data;
+      })
+      .catch((error) => {
+        const { response } = error;
+        return response.data;
       });
-      return response.json();
-    } catch (err) {
-      console.error(err);
-      return <MojangJSONResponse>{ error: true, errorMessage: err };
+
+    return response;
+  } catch (error) {
+    return {
+      error: true,
+      errorMessage: "ValidateAccessTokenError",
+    };
+  }
+};
+
+/**
+ * Refreshes a valid accessToken. It can be used to keep a user logged in between gaming sessions and is preferred over storing the user's password in a file (see lastlogin)
+ * @param token
+ */
+
+export const refreshMojangToken = async (token) => {
+  const url = `https://authserver.mojang.com/refresh`;
+
+  try {
+    const response: any = await axios.post(url, {
+      accessToken: token.accessToken,
+      clientToken: token.clientToken,
+      requestUser: true,
+    });
+
+    if (!response) {
+      throw response;
     }
-  } else {
-    throw new Error('No available refresh token.');
+    return {
+      ...token,
+      accessToken: response.accessToken,
+      clienttoken: response.clientToken,
+    };
+  } catch (error) {
+    return {
+      ...token,
+      error: true,
+      errorMessage: "RefreshAccessTokenError",
+    };
   }
 };
 
@@ -140,29 +95,19 @@ export const validateMojangToken = async () => {
  * @param accessToken
  * @param clientToken
  */
-export const invalidateMojangToken = async () => {
-  const refreshToken = await ipcRenderer.invoke('get-tokens');
+export const invalidateMojangToken = async (accessToken, clientToken) => {
+  const url = `https://authserver.mojang.com/invalidate`;
 
-  if (refreshToken) {
-    const refreshBody = {
-      accessToken: refreshToken.accessToken,
-      clientToken: refreshToken.clientToken,
-    };
-
-    try {
-      const response = await fetch('/api/mojang/invalidate', {
-        method: 'post',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(refreshBody),
-      });
-      return response.json();
-    } catch (err) {
-      console.error(err);
-      return <MojangJSONResponse>{ error: true, errorMessage: err };
-    }
-  } else {
-    throw new Error('No available refresh token.');
-  }
+  await axios
+    .post(url, {
+      accessToken,
+      clientToken,
+    })
+    .then(({ data }) => {
+      return data;
+    })
+    .catch((error) => {
+      const { response } = error;
+      return response.data;
+    });
 };

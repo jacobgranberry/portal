@@ -1,9 +1,9 @@
 import React from "react";
 import electron from "electron";
-import { DarkModeToggle } from "./darkModeToggle";
 import { useAuth } from "../utils/auth/auth";
 import { useRouter } from "next/router";
 import { NonAuthRoutes } from "./authRoute";
+import { getSession } from "next-auth/client";
 
 const ipcRenderer: any = electron.ipcRenderer || false;
 
@@ -15,30 +15,17 @@ export const DevTools = () => {
     console.log(await ipcRenderer.invoke("get-all-settings"));
   };
 
+  const getSessiona = async () => {
+    const session = await getSession();
+    console.log(session);
+  };
+
   const clearSettings = async () => {
     await ipcRenderer.invoke("clear-all-settings");
     console.log(
       "sttings cleared: ",
       await ipcRenderer.invoke("get-all-settings")
     );
-  };
-
-  const refreshToken = async () => {
-    const res = await auth.refresh();
-    console.log(res);
-  };
-
-  const signout = async () => {
-    await auth.signout();
-    router.push(NonAuthRoutes.login);
-  };
-
-  const validate = async () => {
-    await auth.validate();
-  };
-
-  const getUserState = () => {
-    console.log(auth.user);
   };
 
   const goToLogin = () => {
@@ -51,14 +38,14 @@ export const DevTools = () => {
       <button className="border-2 p-1" onClick={goToLogin}>
         gotologin
       </button>
-      <button className="border-2 p-1" onClick={clearSettings}>
+      {/* <button className="border-2 p-1" onClick={clearSettings}>
         Clear
-      </button>
+      </button> */}
       <button className="border-2 p-1" onClick={getSettings}>
         Get Config
       </button>
-      <button className="border-2 p-1" onClick={getUserState}>
-        Get User State
+      <button className="border-2 p-1" onClick={getSessiona}>
+        Get Session
       </button>
       {/*
       <button className="border-2 p-1" onClick={refreshToken}>

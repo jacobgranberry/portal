@@ -1,30 +1,36 @@
-import React, { useState, useEffect } from 'react';
-import { Dashboard } from '../components/dashboard/dashboard';
-import { Layout } from '../components/layout';
-import { useAuth } from '../utils/auth/auth';
-import { NonAuthRoutes } from '../components/authRoute';
-import { useRouter } from 'next/router';
+import React, { useState, useEffect } from "react";
+import { Dashboard } from "../components/dashboard/dashboard";
+import { Layout } from "../components/layout";
+import { NonAuthRoutes } from "../components/authRoute";
+import { useRouter } from "next/router";
+import { useSession, getSession } from "next-auth/client";
 
 const Home = () => {
-  const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const auth = useAuth();
+  const [session] = useSession();
+  const [loading, setLoading] = useState(true);
 
   // Redirect to login page
   // if not validated.
-  // useEffect(() => {
-  //   if (auth.user === false || auth.user.accessToken === null) {
-  //     console.log(auth.user);
-  //     router.push(NonAuthRoutes.login);
-  //   }
-  //   setLoading(false);
-  // }, [auth, router]);
+  useEffect(() => {
+    if (!session) {
+      router.push(NonAuthRoutes.login);
+    }
+    setLoading(false);
+  }, [session, router]);
 
   return (
-    <Layout>
-      <Dashboard />
+    <Layout loading={loading}>
+      <Dashboard session={session} />
     </Layout>
   );
 };
+
+export async function getServerSideProps(context) {
+  const session = await getSession(context);
+  return {
+    props: { session },
+  };
+}
 
 export default Home;
