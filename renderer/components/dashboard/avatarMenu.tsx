@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import { useAuth } from "../../utils/auth/auth";
-import { useRouter } from "next/router";
-import { NonAuthRoutes } from "../authRoute";
+import React, { useState } from 'react';
+import { useAuth } from '../../utils/auth/auth';
+import { useRouter } from 'next/router';
+import { NonAuthRoutes } from '../authRoute';
 
 export const AvatarMenu = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -35,7 +35,7 @@ export const AvatarMenu = () => {
 
       <div
         className={`${
-          dropdownOpen ? "block" : "hidden"
+          dropdownOpen ? 'block' : 'hidden'
         } absolute right-0 mt-2 w-48 bg-white rounded-md overflow-hidden shadow-xl z-10`}
         // x-show="dropdownOpen"
         // x-transition:enter="transition ease-out duration-100 transform"

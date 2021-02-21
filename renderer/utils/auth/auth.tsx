@@ -11,6 +11,7 @@ import {
 import { AuthRoutes } from '../../components/authRoute';
 import { getUser, updateUser, createUser } from '../db/configManager';
 import electron from 'electron';
+import { signIn, signOut, useSession } from 'next-auth/client';
 
 const ipcRenderer: any = electron.ipcRenderer || false;
 
@@ -42,19 +43,22 @@ function useProvideAuth() {
 
   const signin = async (login: string, password: string) => {
     try {
-      const response = await authenticateMojang(login, password);
-      if (response.error) {
-        toast.error(response.errorMessage, { className: 'bg-red-800 text-sm z-50' });
-        return false;
-      } else {
-        await handleUser(response.data);
-        return true;
-      }
-    } catch (err) {
-      toast.error('Error logging into Mojang servers. Please try again later.', {
-        className: 'bg-red-800 text-sm z-50',
+      const res: any = await signIn('mojang-login', {
+        username: login,
+        password: password,
+        redirect: false,
       });
-      throw new Error(err);
+      if (!res.ok && res.status === 403) {
+        toast.error('Invalid credentials. Please check your username and password and try again.', {
+          className: 'bg-red-800 text-sm',
+        });
+      } else {
+        if (res.ok && res.status === 200) {
+          return true;
+        }
+      }
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -76,21 +80,28 @@ function useProvideAuth() {
 
   const signout = async () => {
     try {
-      const response = await invalidateMojangToken();
-      if (response.error) {
-        toast.error(response.errorMessage, {
-          className: 'bg-red-800 text-sm',
-        });
-      } else {
-        await ipcRenderer.invoke('reset-settings', 'account');
-        await handleUser(false);
-        return true;
-      }
+      // @ts-ignore
+      const res = await signOut({ callbackUrl: '/', redirect: false });
+      return res;
     } catch (err) {
-      console.log('Error signing out, routing to login');
       console.log(err);
-      return false;
     }
+    // try {
+    //   const response = await invalidateMojangToken();
+    //   if (response.error) {
+    //     toast.error(response.errorMessage, {
+    //       className: 'bg-red-800 text-sm',
+    //     });
+    //   } else {
+    //     await ipcRenderer.invoke('reset-settings', 'account');
+    //     await handleUser(false);
+    //     return true;
+    //   }
+    // } catch (err) {
+    //   console.log('Error signing out, routing to login');
+    //   console.log(err);
+    //   return false;
+    // }
   };
 
   const validate = async () => {
