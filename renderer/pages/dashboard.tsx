@@ -8,23 +8,20 @@ import { useSession } from "next-auth/client";
 
 const Home = () => {
   const router = useRouter();
-  const auth = useAuth();
   const [session, loading] = useSession();
 
   // Redirect to login page
   // if not validated.
-  // useEffect(() => {
-  //   if (auth.user === false || auth.user.accessToken === null) {
-  //     console.log(auth.user);
-  //     router.push(NonAuthRoutes.login);
-  //   }
-  //   setLoading(false);
-  // }, [auth, router]);
+  useEffect(() => {
+    if (!session) {
+      router.push(NonAuthRoutes.login);
+    }
+  }, [session, router]);
 
   console.log("SESSION: ", session);
 
   return (
-    <Layout>
+    <Layout loading={loading}>
       <Dashboard />
     </Layout>
   );
