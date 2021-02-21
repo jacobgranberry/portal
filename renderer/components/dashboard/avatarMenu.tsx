@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import { useAuth } from '../../utils/auth/auth';
-import { useRouter } from 'next/router';
-import { NonAuthRoutes } from '../authRoute';
+import React, { useState } from "react";
+import { useAuth } from "../../utils/auth/auth";
+import { useRouter } from "next/router";
+import { NonAuthRoutes } from "../authRoute";
 
-export const AvatarMenu = () => {
+export const AvatarMenu = ({ session }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const auth = useAuth();
   const router = useRouter();
 
   const signout = async () => {
-    await auth.signout();
+    await auth.signout(session.accessToken, session.clientToken);
     router.push(NonAuthRoutes.login);
   };
 
@@ -21,21 +21,23 @@ export const AvatarMenu = () => {
         }}
         className="flex items-center space-x-2 relative focus:outline-none"
       >
-        {auth.user && (
-          <h2 className="text-gray-700 dark:text-gray-300 text-sm hidden sm:block">
-            {auth.user.selectedProfile.name}
-          </h2>
+        {session?.user && (
+          <>
+            <h2 className="text-gray-700 dark:text-gray-300 text-sm hidden sm:block">
+              {session.name}
+            </h2>
+            <img
+              className="h-9 w-9 rounded-full border-2 border-purple-500 object-cover"
+              src={`https://crafatar.com/avatars/${session.userId}`}
+              alt={session.name}
+            />
+          </>
         )}
-        <img
-          className="h-9 w-9 rounded-full border-2 border-purple-500 object-cover"
-          src="https://images.unsplash.com/photo-1553267751-1c148a7280a1?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=634&q=80"
-          alt="idk"
-        />
       </button>
 
       <div
         className={`${
-          dropdownOpen ? 'block' : 'hidden'
+          dropdownOpen ? "block" : "hidden"
         } absolute right-0 mt-2 w-48 bg-white rounded-md overflow-hidden shadow-xl z-10`}
         // x-show="dropdownOpen"
         // x-transition:enter="transition ease-out duration-100 transform"
@@ -49,12 +51,6 @@ export const AvatarMenu = () => {
           className="block px-4 py-2 text-sm text-gray-700 hover:bg-purple-600 hover:text-white"
         >
           Profile
-        </a>
-        <a
-          href="#"
-          className="block px-4 py-2 text-sm text-gray-700 hover:bg-purple-600 hover:text-white"
-        >
-          Tickets
         </a>
         <a
           onClick={signout}

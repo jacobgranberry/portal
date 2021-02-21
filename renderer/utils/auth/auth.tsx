@@ -1,57 +1,32 @@
 /* eslint-disable consistent-return */
-import React, { FC, useState, useContext, createContext, useEffect } from 'react';
-import { toast } from 'react-toastify';
-import {
-  authenticateMojang,
-  validateMojangToken,
-  MojangUserResponse,
-  refreshMojangToken,
-  invalidateMojangToken,
-} from '../../services/mojang';
-import { AuthRoutes } from '../../components/authRoute';
-import { getUser, updateUser, createUser } from '../db/configManager';
-import electron from 'electron';
-import { signIn, signOut, useSession } from 'next-auth/client';
-
-const ipcRenderer: any = electron.ipcRenderer || false;
+import React, { FC, useContext, createContext } from "react";
+import { toast } from "react-toastify";
+import { invalidateMojangToken } from "../../services/mojang";
+import { signIn, signOut } from "next-auth/client";
 
 interface AuthContextInterface {
-  user: MojangUserResponse | false;
   signin: (email: string, password: string) => Promise<boolean>;
-  validate: () => Promise<any>;
-  signout: () => Promise<boolean>;
-  refresh: () => void;
+  signout: (accessToken?: string, clientToken?: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextInterface | null>(null);
 
 // Provider hook that creates auth object and handles state
 function useProvideAuth() {
-  const [user, setUser] = useState<MojangUserResponse | false>(false);
-
-  // Handle a new user object (updates db and sets user state)
-  const handleUser = (rawUser: any) => {
-    if (rawUser) {
-      // Add or update user in database
-      createUser(rawUser);
-      setUser(rawUser);
-      return rawUser;
-    }
-    setUser(false);
-    return false;
-  };
-
   const signin = async (login: string, password: string) => {
     try {
-      const res: any = await signIn('mojang-login', {
+      const res: any = await signIn("mojang-login", {
         username: login,
         password: password,
         redirect: false,
       });
       if (!res.ok && res.status === 403) {
-        toast.error('Invalid credentials. Please check your username and password and try again.', {
-          className: 'bg-red-800 text-sm',
-        });
+        toast.error(
+          "Invalid credentials. Please check your username and password and try again.",
+          {
+            className: "bg-red-800 text-sm",
+          }
+        );
       } else {
         if (res.ok && res.status === 200) {
           return true;
@@ -62,80 +37,19 @@ function useProvideAuth() {
     }
   };
 
-  const refresh = async () => {
-    try {
-      const response = await refreshMojangToken();
-      if (response.error) {
-        toast.error(response.errorMessage, {
-          className: 'bg-red-800 text-sm',
-        });
-      } else {
-        handleUser(response.data);
-        return response;
-      }
-    } catch (err) {
-      throw new Error(err);
-    }
-  };
-
-  const signout = async () => {
+  const signout = async (accessToken?: string, clientToken?: string) => {
     try {
       // @ts-ignore
-      const res = await signOut({ callbackUrl: '/', redirect: false });
-      return res;
+      await signOut({ callbackUrl: "/", redirect: false });
+      await invalidateMojangToken(accessToken, clientToken);
     } catch (err) {
       console.log(err);
     }
-    // try {
-    //   const response = await invalidateMojangToken();
-    //   if (response.error) {
-    //     toast.error(response.errorMessage, {
-    //       className: 'bg-red-800 text-sm',
-    //     });
-    //   } else {
-    //     await ipcRenderer.invoke('reset-settings', 'account');
-    //     await handleUser(false);
-    //     return true;
-    //   }
-    // } catch (err) {
-    //   console.log('Error signing out, routing to login');
-    //   console.log(err);
-    //   return false;
-    // }
   };
-
-  const validate = async () => {
-    try {
-      const response = await validateMojangToken();
-      if (response.error) {
-        await refresh();
-      } else {
-        return true;
-      }
-      console.log('VAL RESPONSE: ', response);
-    } catch (err) {
-      throw new Error(err);
-    }
-    return null;
-  };
-
-  // useEffect(() => {
-  //   // Add user to state on mount
-  //   (async () => {
-  //     await ipcRenderer.invoke('get-all-settings').then((item) => {
-  //       if (item && item.accessToken !== null) {
-  //         setUser(item.account);
-  //       }
-  //     });
-  //   })();
-  // }, []);
 
   return {
-    user,
     signin,
-    validate,
     signout,
-    refresh,
   };
 }
 

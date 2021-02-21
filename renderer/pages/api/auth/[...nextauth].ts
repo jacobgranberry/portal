@@ -1,20 +1,10 @@
 import NextAuth from "next-auth";
 import Providers from "next-auth/providers";
-import axios from "axios";
-
-const login = async (data) => {
-  const url = "https://authserver.mojang.com/authenticate";
-  const result = await axios
-    .post(url, data)
-    .then(({ data }) => {
-      return data;
-    })
-    .catch((error) => {
-      const { response } = error;
-      return response.data;
-    });
-  return result;
-};
+import {
+  authenticateMojangLogin,
+  validateMojangToken,
+  refreshMojangToken,
+} from "../../../services/mojang";
 
 const options = {
   NEXTAUTH_URL:
@@ -31,16 +21,7 @@ const options = {
       },
       async authorize({ username, password }) {
         try {
-          const data = {
-            agent: {
-              name: "Minecraft",
-              version: 1,
-            },
-            username,
-            password,
-            requestUser: true,
-          };
-          const user = await login(data);
+          const user = await authenticateMojangLogin(username, password);
           if (user) {
             return user;
           } else {
@@ -69,26 +50,42 @@ const options = {
       }
     },
     async jwt(token, user) {
+      // Signing in
       if (user) {
-        token.accessToken = user.accessToken;
-        token.clientToken = user.clientToken;
-        token.name = user.selectedProfile.name;
+        return {
+          accessToken: user.accessToken,
+          clientToken: user.clientToken,
+          name: user.selectedProfile.name,
+          userId: user.selectedProfile.id,
+        };
       }
-      return token;
+
+      // Subsequent use of JWT, the user has been logged in before
+      // if token is still validated, return token
+      const isValidated = await validateMojangToken(
+        token.accessToken,
+        token.clientToken
+      );
+      if (isValidated === "" || isValidated === {}) {
+        return token;
+      }
+      // validation has expired, try to refresh it
+      return refreshMojangToken(token);
     },
     async session(session, token) {
       if (token) {
         session.accessToken = token.accessToken;
         session.clientToken = token.clientToken;
         session.name = token.name;
+        session.userId = token.userId;
       }
       return session;
     },
   },
   pages: {
-    signIn: "/",
-    newUser: "/",
-    error: "/",
+    signIn: "/login",
+    newUser: "/login",
+    error: "/login",
   },
   debug: process.env.NODE_ENV === "development",
 };

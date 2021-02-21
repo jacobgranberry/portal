@@ -1,12 +1,12 @@
-import React from 'react';
+import React from "react";
 
 export enum AuthRoutes {
-  dashboard = '/dashboard',
+  dashboard = "/dashboard",
 }
 
 export enum NonAuthRoutes {
-  login = '/',
-  unauthorized = '/unauthorized',
+  login = "/login",
+  unauthorized = "/unauthorized",
 }
 
 interface AuthRouteProps {
@@ -16,7 +16,11 @@ interface AuthRouteProps {
   location?: any;
 }
 
-export const AuthRoute = ({ Component, path, exact = false }: AuthRouteProps): JSX.Element => {
+export const AuthRoute = ({
+  Component,
+  path,
+  exact = false,
+}: AuthRouteProps): JSX.Element => {
   //   const isAuthed = settings.has("account.accessToken");
   const isAuthed = true;
   console.log({ isAuthed });

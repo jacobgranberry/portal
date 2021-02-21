@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Dashboard } from "../components/dashboard/dashboard";
 import { Layout } from "../components/layout";
-import { useAuth } from "../utils/auth/auth";
 import { NonAuthRoutes } from "../components/authRoute";
 import { useRouter } from "next/router";
-import { useSession } from "next-auth/client";
+import { useSession, getSession } from "next-auth/client";
 
 const Home = () => {
   const router = useRouter();
-  const [session, loading] = useSession();
+  const [session] = useSession();
+  const [loading, setLoading] = useState(true);
 
   // Redirect to login page
   // if not validated.
@@ -16,15 +16,21 @@ const Home = () => {
     if (!session) {
       router.push(NonAuthRoutes.login);
     }
+    setLoading(false);
   }, [session, router]);
-
-  console.log("SESSION: ", session);
 
   return (
     <Layout loading={loading}>
-      <Dashboard />
+      <Dashboard session={session} />
     </Layout>
   );
 };
+
+export async function getServerSideProps(context) {
+  const session = await getSession(context);
+  return {
+    props: { session },
+  };
+}
 
 export default Home;

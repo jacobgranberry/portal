@@ -1,6 +1,5 @@
 import React from "react";
 import electron from "electron";
-import { DarkModeToggle } from "./darkModeToggle";
 import { useAuth } from "../utils/auth/auth";
 import { useRouter } from "next/router";
 import { NonAuthRoutes } from "./authRoute";
@@ -29,10 +28,6 @@ export const DevTools = () => {
     );
   };
 
-  const getUserState = () => {
-    console.log(auth.user);
-  };
-
   const goToLogin = () => {
     router.push(NonAuthRoutes.login);
   };
@@ -48,9 +43,6 @@ export const DevTools = () => {
       </button> */}
       <button className="border-2 p-1" onClick={getSettings}>
         Get Config
-      </button>
-      <button className="border-2 p-1" onClick={getUserState}>
-        Get User State
       </button>
       <button className="border-2 p-1" onClick={getSessiona}>
         Get Session

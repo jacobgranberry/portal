@@ -6,7 +6,7 @@ import { AvatarMenu } from "./avatarMenu";
 // Design inspo
 // https://dribbble.com/shots/14715807-Devblogg-Editor-Get-early-access/attachments/6415835?mode=media
 
-export const Dashboard = ({ loading = true }) => {
+export const Dashboard = ({ loading = true, session }) => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const darkMode = useDarkMode(false, {
     classNameDark: "dark",
@@ -155,7 +155,7 @@ export const Dashboard = ({ loading = true }) => {
                 />
               </svg>
             </button>
-            <AvatarMenu />
+            <AvatarMenu session={session} />
           </div>
         </header>
 
